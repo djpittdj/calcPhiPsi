@@ -1,3 +1,6 @@
+"""
+Author: Jian Dai
+"""
 #!/usr/bin/python
 from FSUNMRBase import NMRBase
 from FSUPeptidePlane import Propagator
