@@ -8,15 +8,15 @@ import re, math
 
 class CalcPhiPsi:
 	def __init__(self, s11, s22, s33, nuParallel, betaNH, infilename, outfilename):
-		self.nmr = NMRBase()
-		self.nmr.betaRad = self.nmr.toRad(betaNH)
-		self.nmr.sigma11 = s11
-		self.nmr.sigma22 = s22
-		self.nmr.sigma33 = s33
-		self.nmr.nuParallel = nuParallel
-		self.propagator = Propagator(self.nmr)
+		nmr = NMRBase()
+		nmr.betaRad = nmr.toRad(betaNH)
+		nmr.sigma11 = s11
+		nmr.sigma22 = s22
+		nmr.sigma33 = s33
+		nmr.nuParallel = nuParallel
+		self.betaRad = nmr.betaRad
+		self.propagator = Propagator(nmr)
 		self.spectrum = []
-		self.PhiPsi = []
 		self.outfilename = outfilename
 
 		# read in PISEMA data file
@@ -31,8 +31,8 @@ class CalcPhiPsi:
 				ipos = []
 				ipos.append(Vector(0.0, 0.0, 0.0))
 			else:
-				sgn = self.propagator.nmr.determineDipoleSign(dipole, cs, 2)
-				[ipos, eps] = self.propagator.nmr.getBinPAF(cs, dipole, sgn, 1)
+				sgn = nmr.determineDipoleSign(dipole, cs, 2)
+				[ipos, eps] = nmr.getBinPAF(cs, dipole, sgn, 1)
 			data = [cs, dipole, ipos, sgn, eps, resid]
 			self.spectrum.append(data)
 		infile.close()
@@ -59,7 +59,7 @@ class CalcPhiPsi:
 
 		Tors = []
 		Exact = []
-		minDelta = 999.
+		minDelta = 999.0
 		closestPhi = 0.0
 		closestPsi = 0.0
 		if (len(ipos) == 0 or len(jpos) == 0) :
@@ -67,7 +67,7 @@ class CalcPhiPsi:
 		elif ipos[0].length() > 0. and jpos[0].length() > 0.:
 			for di in range(0, len(ipos), 1):
 				for dj in range(0, len(jpos), 1):
-					[tors, exact, grams, eps] = self.propagator.computeTorsionsByChiralities(ipos[di], jpos[dj], self.nmr.betaRad, 0, 1)
+					tors, exact, grams, eps = self.propagator.computeTorsionsByChiralities(ipos[di], jpos[dj], self.betaRad, 0, 1)
 					Tors.extend(tors)
 					Exact.extend(exact)
 
@@ -88,16 +88,16 @@ class CalcPhiPsi:
 		for i in range(0, num_aa-1):
 			j = i+1
 			resid = self.spectrum[i][-1]
-			[closestPhi, closestPsi] = self.calcClosestPhiPsi(i, j)
-			(self.PhiPsi).append([closestPhi, closestPsi])
+			closestPhi, closestPsi = self.calcClosestPhiPsi(i, j)
 			print>>outfile, '%4i%4i%10.3f%10.3f' % (resid, resid+1, closestPhi, closestPsi)
 		outfile.close()
 
-sigma11 = 57.3
-sigma22 = 81.2
-sigma33 = 227.8
-nuParallel = 10.735
-betaNH = 17.0
-dataFile = 'kdpf_pisema.dat'
-calcPhiPsi = CalcPhiPsi(sigma11, sigma22, sigma33, nuParallel, betaNH, dataFile, 'phipsi.dat')
-calcPhiPsi.calcTors()
+if __name__ == '__main__':
+	sigma11 = 57.3
+	sigma22 = 81.2
+	sigma33 = 227.8
+	nuParallel = 10.735
+	betaNH = 17.0
+	dataFile = 'kdpf_pisema.dat'
+	calcPhiPsi = CalcPhiPsi(sigma11, sigma22, sigma33, nuParallel, betaNH, dataFile, 'phipsi.dat')
+	calcPhiPsi.calcTors()
